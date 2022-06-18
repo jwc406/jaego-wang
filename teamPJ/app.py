@@ -12,23 +12,27 @@ from flask import render_template
 app = Flask(__name__)
 
 global urlNike
-global urlAdidas
 global urlNewB
-
-
+global urlVans
+global dataSet
+dataSet=[]
 
 @app.route('/info', methods=['POST'])
 def home_html():
     if request.method == 'POST':
-        dataSet=[]
-        #nikeCrwal(dataSet)
-        NewBCrawl(dataSet)
-        return render_template("home.html", parsed_page=dataSet)
+        nikeCrwal(dataSet)
+        newBCrawl(dataSet)
+        vansCrawl(dataSet)
+        return render_template("parsedInfo.html", parsed_page=dataSet)
 
 
 def nikeCrwal(dataSet):
-        urlNike = request.form[u'urlNike']
-
+        try:
+            urlNike = request.form[u'urlNike']
+        except:
+            return;
+        
+        
         print("Crawling initiating")
         session = HTMLSession()
         r = session.get(urlNike)
@@ -45,14 +49,22 @@ def nikeCrwal(dataSet):
             itemStock=True
 
         #itemStockSize = r.html.find('span.input-radio')   #사이즈별로 재고 불러오기 구현 X          
+        e = []
+        e.append(itemName)
+        e.append(itemImg)
+        e.append(itemStock)
 
-        dataSet.append(itemName)
-        dataSet.append(itemImg)
-        dataSet.append(itemStock)
+        if e in dataSet:
+            return
+        
+        dataSet.append(e)
         #dataSet.append(itemStockSize)  
 
-def NewBCrawl(dataSet):
-        urlNewB = request.form[u'urlNewB']
+def newBCrawl(dataSet):
+        try:
+            urlNewB = request.form[u'urlNewB']
+        except:
+            return ;
 
         print("Crawling initiating")
         session = HTMLSession()
@@ -74,15 +86,52 @@ def NewBCrawl(dataSet):
         else:
             itemStock = True
 
-        dataSet.append(itemName)
-        dataSet.append(itemImg)
-        dataSet.append(itemStock)
+        e = []
+        e.append(itemName)
+        e.append(itemImg)
+        e.append(itemStock)
        
+        if e in dataSet:
+            return
+        
+        dataSet.append(e)
+        #dataSet.append(itemStockSize)  
+
+def vansCrawl(dataSet):
+        try:
+            urlVans = request.form[u'urlVans']
+        except:
+            return ;
+        print("Crawling initiating")
+        session = HTMLSession()
+        r = session.get(urlVans)
+        #r.html.render(sleep=1, keep_page=True)
+
+        itemName = r.html.find('div.product-summary > h1')[0].text
+        itemImg = r.html.find('ul.thumb-wrap>li>a>img')[0]
+        itemImg = itemImg.attrs['src']
+        itemImg = itemImg[0 : -10]
+        itemStock = r.html.find('#wrapper > main > section > div.pdp-container > div.pdp-main.row.flex-no-gutters > div:nth-child(2) > div > div.fixit-element.pdp-info > form > div.product-variations-action > div > div > span')
+        
+        if len(itemStock)>0:
+            itemStock = False
+        else:
+             itemStock = True
+
+        e = []
+        e.append(itemName)
+        e.append(itemImg)
+        e.append(itemStock)
+       
+        if e in dataSet:
+            return
+        
+        dataSet.append(e)
         #dataSet.append(itemStockSize)  
 
 @app.route('/')
-def infoParsed_html():
-    return render_template('infoParsed.html')
+def inputURL_html():
+    return render_template('inputURL.html')
 
 if __name__=='__main__':
     try:
